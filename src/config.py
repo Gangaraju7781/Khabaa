@@ -29,82 +29,105 @@
 # openai_api_key = st.secrets['OPENAI_API_KEY']
 # stripe_api_key = st.secrets['STRIPE_API_KEY']
 
+# config.py
 import os
 import json
 import streamlit as st
-from typing import Dict
+from google.cloud import spanner
 
-def write_credentials_file(credentials_dict: Dict) -> str:
-    """
-    Safely write credentials to a temporary file with proper permissions
-    """
+def setup_google_credentials():
+    """Setup Google credentials from Streamlit secrets"""
+    credentials_json = st.secrets.get("GOOGLE_APPLICATION_CREDENTIALS")
+    if credentials_json:
+        try:
+            # Convert AttrDict to dict if needed
+            credentials_dict = dict(credentials_json) if hasattr(credentials_json, '__dict__') else credentials_json
+            credentials_path = "/tmp/google_credentials.json"
+            with open(credentials_path, "w") as f:
+                json.dump(credentials_dict, f)
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
+        except Exception as e:
+            raise ValueError(f"Failed to process GOOGLE_APPLICATION_CREDENTIALS: {e}")
+    else:
+        raise ValueError("GOOGLE_APPLICATION_CREDENTIALS not found in Streamlit secrets")
+
+def get_spanner_configs():
+    """Get and validate Spanner configurations"""
+    # Convert AttrDict to string explicitly
+    instance_id = str(st.secrets["INSTANCE_ID"])
+    database_id = str(st.secrets["DATABASE_ID"])
+    return instance_id, database_id
+
+def get_spanner_client():
+    """Initialize and return Spanner client, instance, and database"""
     try:
-        # Create credentials directory if it doesn't exist
-        os.makedirs("/tmp/credentials", exist_ok=True)
-        credentials_path = "/tmp/credentials/google_credentials.json"
+        # Initialize client
+        client = spanner.Client()
         
-        # Write credentials with proper permissions
-        with open(credentials_path, "w") as f:
-            json.dump(credentials_dict, f)
+        # Get instance and database IDs
+        instance_id, database_id = get_spanner_configs()
         
-        # Set proper file permissions (readable only by the current user)
-        os.chmod(credentials_path, 0o600)
+        # Get instance and database
+        instance = client.instance(instance_id)
+        database = instance.database(database_id)
         
-        return credentials_path
+        return client, instance, database
     except Exception as e:
-        raise ValueError(f"Failed to write credentials file: {str(e)}")
+        raise ValueError(f"Failed to initialize Spanner client: {e}")
 
-def load_config() -> Dict[str, str]:
-    """Load all configuration values from Streamlit secrets"""
-    # Get Google credentials
-    credentials = st.secrets.get("GOOGLE_APPLICATION_CREDENTIALS")
-    if not credentials:
-        raise ValueError("GOOGLE_APPLICATION_CREDENTIALS not found in secrets")
-    
+def authenticate_user(email, password):
+    """Authenticate user with email and password"""
     try:
-        # Handle both string and dictionary formats
-        if isinstance(credentials, str):
-            credentials_dict = json.loads(credentials)
-        else:
-            credentials_dict = dict(credentials)
+        # Get Spanner database
+        _, _, database = get_spanner_client()
+        
+        # Hash password
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+        
+        # Execute query within snapshot
+        with database.snapshot() as snapshot:
+            query = """
+                SELECT UserID, FirstName 
+                FROM Users 
+                WHERE Email = @email 
+                AND PasswordHash = @password_hash
+            """
             
-        # Write credentials to file
-        credentials_path = write_credentials_file(credentials_dict)
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
-        
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid GOOGLE_APPLICATION_CREDENTIALS format: {str(e)}")
-    
-    # Get other required configurations
-    config = {
-        "INSTANCE_ID": str(st.secrets.get("INSTANCE_ID", "")),
-        "DATABASE_ID": str(st.secrets.get("DATABASE_ID", "")),
-        "SERP_API_KEY": str(st.secrets.get("SERP_API_KEY", "")),
-        "OPENAI_API_KEY": str(st.secrets.get("OPENAI_API_KEY", "")),
-        "STRIPE_API_KEY": str(st.secrets.get("STRIPE_API_KEY", ""))
-    }
-    
-    # Validate required configurations
-    if not config["INSTANCE_ID"] or not config["DATABASE_ID"]:
-        raise ValueError("INSTANCE_ID and DATABASE_ID must be provided in secrets")
-        
-    return config
+            params = {
+                'email': email,
+                'password_hash': hashed_password
+            }
+            param_types = {
+                'email': spanner.param_types.STRING,
+                'password_hash': spanner.param_types.STRING
+            }
+            
+            results = list(snapshot.execute_sql(
+                query,
+                params=params,
+                param_types=param_types
+            ))
+            
+            if results:
+                user_id, first_name = results[0]
+                st.session_state["user_id"] = user_id
+                st.session_state["first_name"] = first_name
+                st.success(f"Welcome back, {first_name}!")
+                return True
+            else:
+                st.error("Invalid email or password.")
+                return False
+                
+    except Exception as e:
+        st.error(f"Authentication error: {str(e)}")
+        return False
 
-# Load configuration
+# Initialize the configuration when the module is imported
 try:
-    config = load_config()
-    
-    # Make configurations available globally
-    instance_id = config["INSTANCE_ID"]
-    database_id = config["DATABASE_ID"]
-    api_key = config["SERP_API_KEY"]
-    openai_api_key = config["OPENAI_API_KEY"]
-    stripe_api_key = config["STRIPE_API_KEY"]
-    
+    setup_google_credentials()
 except Exception as e:
-    st.error(f"Configuration Error: {str(e)}")
+    st.error(f"Failed to setup Google credentials: {e}")
     raise
-
 
 # SMTP Configuration for Gmail
 smtp_server = "smtp.gmail.com"
