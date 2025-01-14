@@ -3,7 +3,7 @@ import json
 import streamlit as st
 
 # Fetch credentials from Streamlit secrets
-credentials_json = st.secrets.get("GOOGLE_APPLICATION_CREDENTIALS")
+credentials_json = st.secrets["GOOGLE_APPLICATION_CREDENTIALS"]
 
 if credentials_json:
     try:
