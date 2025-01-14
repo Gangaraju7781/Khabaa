@@ -129,12 +129,4 @@ except Exception as e:
     st.error(f"Failed to setup Google credentials: {e}")
     raise
 
-# SMTP Configuration for Gmail
-smtp_server = "smtp.gmail.com"
-smtp_port = 587  # TLS port
-smtp_username = "bhaskarabbireddy9@gmail.com"  # Your Gmail address
-smtp_password = "ffkv owzp xbvb jbsf"  # App password or Gmail password
-
-# OpenAI API Key
-import openai
-openai.api_key = openai_api_key
+# SMTP Configuration for Gmai
