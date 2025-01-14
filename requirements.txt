@@ -6,3 +6,4 @@ python-dotenv
 openai
 streamlit-lottie
 stripe
+google.oauth2
