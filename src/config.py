@@ -7,10 +7,13 @@ credentials_json = st.secrets.get("GOOGLE_APPLICATION_CREDENTIALS")
 
 if credentials_json:
     try:
+        # Convert AttrDict to a plain dictionary
+        credentials_dict = dict(credentials_json)
+
         # Write credentials to a temporary file
         credentials_path = "/tmp/google_credentials.json"
         with open(credentials_path, "w") as f:
-            json.dump(credentials_json, f)
+            json.dump(credentials_dict, f)
         
         # Set the environment variable to point to the temporary file
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials_path
