@@ -2,7 +2,7 @@ import os
 import json
 import streamlit as st
 
-# Dynamically handle Google Cloud credentials from Streamlit secrets
+# Fetch credentials from Streamlit secrets
 credentials_json = st.secrets.get("GOOGLE_APPLICATION_CREDENTIALS")
 
 if credentials_json:
@@ -22,12 +22,12 @@ if credentials_json:
 else:
     raise ValueError("GOOGLE_APPLICATION_CREDENTIALS not found in Streamlit secrets.")
 
-# Fetch other secrets
-instance_id = st.secrets.get('INSTANCE_ID')
-database_id = st.secrets.get('DATABASE_ID')
-api_key = st.secrets.get('SERP_API_KEY')
-openai_api_key = st.secrets.get('OPENAI_API_KEY')
-stripe_api_key = st.secrets.get('STRIPE_API_KEY')
+# Fetch other secrets and convert to strings
+instance_id = str(st.secrets.get('INSTANCE_ID'))
+database_id = str(st.secrets.get('DATABASE_ID'))
+api_key = str(st.secrets.get('SERP_API_KEY'))
+openai_api_key = str(st.secrets.get('OPENAI_API_KEY'))
+stripe_api_key = str(st.secrets.get('STRIPE_API_KEY'))
 
 # SMTP Configuration for Gmail
 smtp_server = "smtp.gmail.com"
