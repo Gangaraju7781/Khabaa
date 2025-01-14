@@ -10,6 +10,13 @@ from google.cloud import spanner
 import streamlit as st
 from config import instance_id, database_id
 
+# Initialize Spanner client
+spanner_client = spanner.Client()
+
+# Ensure instance_id and database_id are strings
+instance = spanner_client.instance(str(instance_id))
+database = instance.database(str(database_id))
+
 # Product-related functions (original)
 def product_exists(transaction, product_link):
     """
