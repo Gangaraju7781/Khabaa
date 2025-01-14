@@ -67,7 +67,7 @@ def load_lottie_file(filepath: str):
         return json.load(f)
     
 # Load a grocery-related Lottie animation
-lottie_animation = load_lottie_file("/Users/bdvvgangarajuabbireddy/Downloads/grocery_animation.json")
+lottie_animation = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_V9t630.json")
 
 def proceed_to_checkout():
     st.session_state.page = 'checkout'
