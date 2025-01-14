@@ -25,7 +25,7 @@ else:
 # Fetch other secrets and convert to strings
 instance_id = st.secrets['INSTANCE_ID']
 database_id = st.secrets['DATABASE_ID']
-api_key = st.secrets['SERP_API_KEY']]
+api_key = st.secrets['SERP_API_KEY']
 openai_api_key = st.secrets['OPENAI_API_KEY']
 stripe_api_key = st.secrets['STRIPE_API_KEY']
 
