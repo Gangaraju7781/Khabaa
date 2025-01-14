@@ -53,12 +53,13 @@ if credentials_json:
 else:
     raise ValueError("GOOGLE_APPLICATION_CREDENTIALS not found in Streamlit secrets.")
 
-# Convert all secrets to strings explicitly
+# Explicitly cast secrets to strings
 instance_id = str(st.secrets.get("INSTANCE_ID"))
 database_id = str(st.secrets.get("DATABASE_ID"))
 api_key = str(st.secrets.get("SERP_API_KEY"))
 openai_api_key = str(st.secrets.get("OPENAI_API_KEY"))
 stripe_api_key = str(st.secrets.get("STRIPE_API_KEY"))
+
 
 # SMTP Configuration for Gmail
 smtp_server = "smtp.gmail.com"
