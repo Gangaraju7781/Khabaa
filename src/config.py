@@ -1,9 +1,22 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv(dotenv_path='src/.env')
+import os
+import json
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+# Read from Streamlit secrets
+credentials_json = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+
+if credentials_json:
+    # Write credentials to a temporary file
+    credentials_path = "/tmp/google_credentials.json"  # Temp directory for runtime
+    with open(credentials_path, "w") as f:
+        json.dump(json.loads(credentials_json), f)
+    # Set the environment variable to point to the temporary file
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
+else:
+    raise ValueError("GOOGLE_APPLICATION_CREDENTIALS not set in environment variables or secrets.")
+
 
 instance_id = os.getenv('INSTANCE_ID')
 database_id = os.getenv('DATABASE_ID')
